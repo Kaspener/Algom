@@ -46,14 +46,13 @@ void Matrix::printMatrix() const
 
 bool Matrix::checkZero(int i, int j)
 {
-    bool flag = true;
     while (i < n)
     {
-        if (matrix[i][j].numerator == 0)
+        if (matrix[i][j].numerator != 0)
             return false;
         ++i;
     }
-    return false;
+    return true;
 }
 
 void Matrix::setMaxElement(int starti, int j)
@@ -62,7 +61,7 @@ void Matrix::setMaxElement(int starti, int j)
     Fraction mmax = matrix[starti][j];
     for (int i = starti + 1; i < n; ++i)
     {
-        if (Fraction::abs(matrix[i][j]) > mmax)
+        if (matrix[i][j].numerator != 0 && Fraction::abs(matrix[i][j]) > mmax)
         {
             mmax = matrix[i][j];
             swapPos = i;
@@ -92,7 +91,8 @@ bool Matrix::noSolutions()
                     break;
                 }
             }
-            if (isZero) return true;
+            if (isZero)
+                return true;
         }
     }
     return false;
@@ -106,11 +106,12 @@ void Matrix::JordanGauss()
     std::cout << "Start matrix:" << std::endl;
     printMatrix();
     std::cout << std::endl;
-    for (; row < n - 1; ++row, ++column)
+    for (; row < n && column < m - 1; ++row, ++column)
     {
         while (checkZero(row, column) && column < m - 1)
         {
             column++;
+            std::cout << "Column " << column << " only zero!" << std::endl;
         }
         if (column == m - 1)
         {
@@ -151,51 +152,41 @@ void Matrix::JordanGauss()
         printMatrix();
         std::cout << std::endl;
     }
-    while (matrix[row][column].numerator == 0 && column < m - 1)
-    {
-        column++;
-    }
-    if (column != m - 1)
-    {
-        for (int i = column + 1; i < m; ++i)
-        {
-            matrix[row][i] /= matrix[row][column];
-        }
-        matrix[row][column].numerator = 1;
-        matrix[row][column].denominator = 1;
-        std::cout << "Change line " << row << std::endl;
-        printMatrix();
-        std::cout << std::endl;
-        for (int i = row - 1; i > -1; --i)
-        {
-            for (int j = column + 1; j < m; ++j)
-            {
-                matrix[i][j] -= matrix[row][j] * matrix[i][column];
-            }
-            matrix[i][column].numerator = 0;
-            matrix[i][column].denominator = 1;
-        }
-        std::cout << "Zeroing a column " << column << std::endl;
-        printMatrix();
-        std::cout << std::endl;
-    }
 
-    if (noSolutions()){
+    if (noSolutions())
+    {
         std::cout << "The system has no solutions" << std::endl;
         return;
     }
-    else{
+    else
+    {
         std::cout << "Solution:" << std::endl;
-        for(int i = 0, j = 0; i < n && j < m - 1; ++i, ++j){
-            if (matrix[i][j] == Fraction{1}){
-                std::cout << "x" << j+1 << " = " << matrix[i][m-1] << " ";
-                for(int tmp = j+1; tmp < m-1; ++tmp){
-                    if (matrix[i][tmp].numerator != 0){
+        for (int i = 0, j = 0; i < n && j < m - 1; ++i, ++j)
+        {
+            if (matrix[i][j] == Fraction{1})
+            {
+                bool flag = true;
+                if (matrix[i][m - 1].numerator != 0){
+                    std::cout << "x" << j + 1 << " = " << matrix[i][m - 1] << " ";
+                    flag = false;
+                }
+                else
+                    std::cout << "x" << j + 1 << " = ";
+                for (int tmp = j + 1; tmp < m - 1; ++tmp)
+                {
+                    if (matrix[i][tmp].numerator != 0)
+                    {
+                        flag = false;
                         std::cout << (matrix[i][tmp].numerator < 0 ? "+ " : "- ");
-                        std::cout << Fraction::abs(matrix[i][tmp]) << "(x" << tmp+1 << ") ";
+                        std::cout << Fraction::abs(matrix[i][tmp]) << "(x" << tmp + 1 << ") ";
                     }
                 }
+                if (flag) std::cout << "0";
                 std::cout << std::endl;
+            }
+            else
+            {
+                i--;
             }
         }
     }
