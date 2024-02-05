@@ -58,12 +58,12 @@ bool Matrix::checkZero(int i, int j)
 void Matrix::setMaxElement(int starti, int j)
 {
     int swapPos = -1;
-    Fraction mmax = matrix[starti][j];
+    Fraction mmax = Fraction::abs(matrix[starti][j]);
     for (int i = starti + 1; i < n; ++i)
     {
-        if (matrix[i][j].numerator != 0 && Fraction::abs(matrix[i][j]) > mmax)
+        if (Fraction::abs(matrix[i][j]) > mmax)
         {
-            mmax = matrix[i][j];
+            mmax = Fraction::abs(matrix[i][j]);
             swapPos = i;
         }
     }

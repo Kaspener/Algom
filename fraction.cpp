@@ -1,5 +1,6 @@
 #include "fraction.hpp"
 #include <numeric>
+#include <string>
 
 Fraction::Fraction(long long n, long long d)
 {
