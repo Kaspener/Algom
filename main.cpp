@@ -2,19 +2,27 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 class Matrix
 {
 private:
     int n, m;
+    int matrix_size = 0;
+    bool noSolution = false;
     std::vector<std::vector<Fraction>> matrix;
+
+
     void setMaxElement(int i, int j);
     bool checkZero(int i, int j);
     bool noSolutions();
+    void printOneBasis(const std::vector<int> &basis) const;
+    std::vector<std::vector<int>> basisPositions();
 
 public:
     Matrix(std::ifstream &in);
-
+    void Basises();
+    int getMatrixSize() const;
     void printMatrix() const;
     void JordanGauss();
 };
@@ -98,6 +106,173 @@ bool Matrix::noSolutions()
     return false;
 }
 
+int Matrix::getMatrixSize() const
+{
+    return matrix_size;
+}
+
+std::vector<std::vector<int>> Matrix::basisPositions()
+{
+    auto nextSet = [](std::vector<int> &a, int n, int m)
+    {
+        int k = m;
+        for (int i = k - 1; i >= 0; --i)
+            if (a[i] < n - k + i + 1)
+            {
+                ++a[i];
+                for (int j = i + 1; j < k; ++j)
+                    a[j] = a[j - 1] + 1;
+                return true;
+            }
+        return false;
+    };
+
+    std::vector<std::vector<int>> vec;
+    if (m - 1 >= matrix_size)
+    {
+        std::vector<int> tmp(matrix_size);
+        for (int i = 0; i < matrix_size; ++i)
+        {
+            tmp[i] = i;
+        }
+        vec.push_back(tmp);
+        while (nextSet(tmp, m - 2, matrix_size))
+            vec.push_back(tmp);
+    }
+    return vec;
+}
+
+void Matrix::printOneBasis(const std::vector<int> &basis) const
+{
+    std::cout << "{ ";
+    for (int i = 0; i < basis.size() - 1; ++i)
+    {
+        std::cout << "x" << basis[i] + 1 << "; ";
+    }
+    std::cout << "x" << basis.back() + 1 << " }   ";
+}
+
+void Matrix::Basises()
+{
+    if (noSolution){
+        std::cout << "The matrix has no solutions, so you cannot use the search for basic solutions" << std::endl;
+        return;
+    }
+    std::vector<std::vector<int>> basis = basisPositions();
+    std::cout << "SIZE = " << basis.size() << std::endl;
+    std::vector<std::vector<Fraction>> startVec(matrix_size, std::vector<Fraction>(m));
+    for (auto &basisItem : basis)
+    {
+        std::vector<std::vector<int>> isUsed(matrix_size, std::vector<int>());
+        for (int i = 0; i < matrix_size; ++i)
+        {
+            for (int j = 0; j < m; ++j)
+            {
+                startVec[i][j] = matrix[i][j];
+            }
+        }
+        bool flag = true;
+        for (int row = 0; row < matrix_size; ++row)
+        {
+            for (auto &it : basisItem)
+            {
+                if (startVec[row][it].numerator != 0)
+                {
+                    isUsed[row].push_back(it);
+                }
+            }
+            if (isUsed[row].size() == 0)
+            {
+                flag = false;
+                break;
+            }
+            if (isUsed[row].size() == 1)
+            {
+                for (int i = 0; i < row; ++i)
+                {
+                    auto it = std::find(isUsed[i].begin(), isUsed[i].end(), isUsed[row][0]);
+                    if (it != isUsed[i].end())
+                        isUsed[i].erase(std::find(isUsed[i].begin(), isUsed[i].end(), isUsed[row][0]));
+                }
+            }
+        }
+        if (!flag)
+        {
+            printOneBasis(basisItem);
+            std::cout << "NO BASIS" << std::endl;
+            continue;
+        }
+        for (int row = 0; row < matrix_size; ++row)
+        {
+            if (isUsed[row].size() > 1)
+            {
+                int num = isUsed[row][0];
+                isUsed[row].clear();
+                isUsed[row].push_back(num);
+                for (int i = row + 1; i < matrix_size; ++i)
+                {
+                    auto it = std::find(isUsed[i].begin(), isUsed[i].end(), num);
+                    if (it != isUsed[i].end())
+                        isUsed[i].erase(std::find(isUsed[i].begin(), isUsed[i].end(), num));
+                }
+            }
+        }
+        for (int row = 0; row < matrix_size; ++row)
+        {
+            Fraction del = startVec[row][isUsed[row][0]];
+            for (int i = 0; i < m; ++i)
+            {
+                startVec[row][i] /= del;
+            }
+            for (int i = row + 1; i < matrix_size; ++i)
+            {
+                for (int j = isUsed[row][0] + 1; j < m; ++j)
+                {
+                    startVec[i][j] -= startVec[row][j] * startVec[i][isUsed[row][0]];
+                }
+                for (int j = isUsed[row][0] - 1; j > -1; --j)
+                {
+                    startVec[i][j] -= startVec[row][j] * startVec[i][isUsed[row][0]];
+                }
+                startVec[i][isUsed[row][0]].numerator = 0;
+                startVec[i][isUsed[row][0]].denominator = 1;
+            }
+            for (int i = row - 1; i > -1; --i)
+            {
+                for (int j = isUsed[row][0] + 1; j < m; ++j)
+                {
+                    startVec[i][j] -= startVec[row][j] * startVec[i][isUsed[row][0]];
+                }
+                for (int j = isUsed[row][0] - 1; j > -1; --j)
+                {
+                    startVec[i][j] -= startVec[row][j] * startVec[i][isUsed[row][0]];
+                }
+                startVec[i][isUsed[row][0]].numerator = 0;
+                startVec[i][isUsed[row][0]].denominator = 1;
+            }
+        }
+        std::vector<Fraction> res(m - 1, 0);
+        for (auto &it : basisItem)
+        {
+            for (int i = 0; i < matrix_size; ++i)
+            {
+                if (isUsed[i][0] == it)
+                {
+                    res[it] = startVec[i][m - 1];
+                    break;
+                }
+            }
+        }
+        printOneBasis(basisItem);
+        std::cout << "{ ";
+        for (int i = 0; i < m - 2; ++i)
+        {
+            std::cout << res[i] << "; ";
+        }
+        std::cout << res.back() << " }" << std::endl;
+    }
+}
+
 void Matrix::JordanGauss()
 {
     int row = 0;
@@ -156,6 +331,7 @@ void Matrix::JordanGauss()
     if (noSolutions())
     {
         std::cout << "The system has no solutions" << std::endl;
+        noSolution = true;
         return;
     }
     else
@@ -166,7 +342,8 @@ void Matrix::JordanGauss()
             if (matrix[i][j] == Fraction{1})
             {
                 bool flag = true;
-                if (matrix[i][m - 1].numerator != 0){
+                if (matrix[i][m - 1].numerator != 0)
+                {
                     std::cout << "x" << j + 1 << " = " << matrix[i][m - 1] << " ";
                     flag = false;
                 }
@@ -181,8 +358,10 @@ void Matrix::JordanGauss()
                         std::cout << Fraction::abs(matrix[i][tmp]) << "(x" << tmp + 1 << ") ";
                     }
                 }
-                if (flag) std::cout << "0";
+                if (flag)
+                    std::cout << "0";
                 std::cout << std::endl;
+                matrix_size++;
             }
             else
             {
@@ -202,5 +381,7 @@ int main(int argc, char **argv)
     std::ifstream in(argv[1]);
     Matrix matrix(in);
     matrix.JordanGauss();
+    std::cout << std::endl;
+    matrix.Basises();
     return 0;
 }
