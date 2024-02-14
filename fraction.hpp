@@ -24,6 +24,7 @@ class Fraction {
         Fraction& operator*=(const int& other);
         Fraction operator/(const Fraction& other) const;
         Fraction& operator/=(const Fraction& other);
+        Fraction& operator/=(const int& other);
         bool operator==(const Fraction& other) const;
         bool operator<(const Fraction& other) const;
         bool operator>(const Fraction& other) const;
