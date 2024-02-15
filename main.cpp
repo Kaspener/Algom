@@ -12,7 +12,6 @@ private:
     bool noSolution = false;
     std::vector<std::vector<Fraction>> matrix;
 
-
     void setMaxElement(int i, int j);
     bool checkZero(int i, int j);
     bool noSolutions();
@@ -154,7 +153,8 @@ void Matrix::printOneBasis(const std::vector<int> &basis) const
 
 void Matrix::Basises()
 {
-    if (noSolution){
+    if (noSolution)
+    {
         std::cout << "The matrix has no solutions, so you cannot use the search for basic solutions" << std::endl;
         return;
     }
@@ -193,6 +193,10 @@ void Matrix::Basises()
                     auto it = std::find(isUsed[i].begin(), isUsed[i].end(), isUsed[row][0]);
                     if (it != isUsed[i].end())
                         isUsed[i].erase(std::find(isUsed[i].begin(), isUsed[i].end(), isUsed[row][0]));
+                    if (isUsed[i].size() == 0) {
+                        flag = false;
+                        break;
+                    }
                 }
             }
         }

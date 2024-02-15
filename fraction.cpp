@@ -73,21 +73,21 @@ Fraction Fraction::operator*(const Fraction &other) const
 {
     int del = std::gcd(other.numerator, denominator);
     int del2 = std::gcd(numerator, other.denominator);
-    return Fraction{numerator/del2 * other.numerator/del, denominator/del * other.denominator/del2};
+    return Fraction{(numerator/del2) * (other.numerator/del), (denominator/del) * (other.denominator/del2)};
 }
 
 Fraction &Fraction::operator*=(const Fraction &other)
 {
     int del = std::gcd(other.numerator, denominator);
     int del2 = std::gcd(numerator, other.denominator);
-    *this = Fraction{numerator/del2 * other.numerator/del, denominator/del * other.denominator/del2};
+    *this = Fraction{(numerator/del2) * (other.numerator/del), (denominator/del) * (other.denominator/del2)};
     return *this;
 }
 
 Fraction &Fraction::operator*=(const int &other)
 {   
     int del = std::gcd(other, denominator);
-    Fraction tmp = Fraction{numerator * other / del, denominator / del};
+    Fraction tmp = Fraction{numerator * (other / del), denominator / del};
     *this = tmp;
     return *this;
 }
@@ -97,7 +97,7 @@ Fraction Fraction::operator/(const Fraction &other) const
     if (numerator == 0) return Fraction{0};
     int del = std::gcd(other.denominator, denominator);
     int del2 = std::gcd(other.numerator, numerator);
-    return Fraction{numerator/del2 * other.denominator/del, denominator/del * other.numerator/del2};
+    return Fraction{(numerator/del2) * (other.denominator/del), (denominator/del) * (other.numerator/del2)};
 }
 
 Fraction &Fraction::operator/=(const Fraction &other)
@@ -105,14 +105,14 @@ Fraction &Fraction::operator/=(const Fraction &other)
     if (numerator == 0) *this = Fraction{0};
     int del = std::gcd(other.denominator, denominator);
     int del2 = std::gcd(other.numerator, numerator);
-    *this = Fraction{numerator/del2 * other.denominator/del, denominator/del * other.numerator/del2};
+    *this = Fraction{(numerator/del2) * (other.denominator/del), (denominator/del) * (other.numerator/del2)};
     return *this;
 }
 
 Fraction &Fraction::operator/=(const int &other)
 {   
     int del = std::gcd(other, numerator);
-    Fraction tmp = Fraction{numerator / del, denominator * other / del};
+    Fraction tmp = Fraction{numerator / del, denominator * (other / del)};
     *this = tmp;
     return *this;
 }
