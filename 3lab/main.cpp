@@ -26,7 +26,7 @@ public:
     unsigned long long supplierAt(int index) const { return suppliers[index]; }
     unsigned long long consumersAt(int index) const { return consumers[index]; }
     void print() const;
-    bool makeClose();
+    int makeClose();
     std::vector<std::pair<int, int>> getSortedCoords() const;
     void printDistribution() const;
 };
@@ -113,14 +113,14 @@ void Matrix::print() const
     std::cout << std::endl;
 }
 
-bool Matrix::makeClose()
+int Matrix::makeClose()
 {
     unsigned long long suppliersCount = std::accumulate(suppliers.begin(), suppliers.end(), 0);
     unsigned long long consumersCount = std::accumulate(consumers.begin(), consumers.end(), 0);
     if (suppliersCount == consumersCount)
     {
         std::cout << "The model of the transport task is closed!" << std::endl;
-        return false;
+        return 0;
     }
     std::cout << "The model of the transport task is open! Make close model:" << std::endl;
     if (suppliersCount > consumersCount)
@@ -132,16 +132,15 @@ bool Matrix::makeClose()
             count[i].push_back(-1);
         }
         m_columns++;
+        print();
+        return 1;
     }
-    else
-    {
-        suppliers.push_back(consumersCount - suppliersCount);
-        cost.push_back(std::vector<unsigned long long>(m_columns, 0));
-        count.push_back(std::vector<long long>(m_columns, -1));
-        m_rows++;
-    }
+    suppliers.push_back(consumersCount - suppliersCount);
+    cost.push_back(std::vector<unsigned long long>(m_columns, 0));
+    count.push_back(std::vector<long long>(m_columns, -1));
+    m_rows++;
     print();
-    return true;
+    return 2;
 }
 
 std::vector<std::pair<int, int>> Matrix::getSortedCoords() const
@@ -198,7 +197,7 @@ public:
 void Solution::run()
 {
     matrix.print();
-    bool beOpen = matrix.makeClose();
+    int opened = matrix.makeClose();
     std::vector<unsigned long long> currentSuppliers(matrix.rows(), 0);
     std::vector<unsigned long long> currentConsumers(matrix.columns(), 0);
     std::vector<std::pair<int, int>> coords = matrix.getSortedCoords();
@@ -215,24 +214,27 @@ void Solution::run()
             matrix.print();
         }
     }
-    if (beOpen)
+    if (opened == 1)
     {
         for (int i = 0; i < currentSuppliers.size(); ++i)
         {
             if (currentSuppliers[i] < matrix.supplierAt(i))
             {
                 matrix.setCountAt(i, matrix.columns() - 1, matrix.supplierAt(i) - currentSuppliers[i]);
-                currentConsumers[matrix.columns()-1] += matrix.supplierAt(i) - currentSuppliers[i];
+                currentConsumers[matrix.columns() - 1] += matrix.supplierAt(i) - currentSuppliers[i];
                 currentSuppliers[i] = matrix.supplierAt(i);
                 countOfSelected++;
             }
         }
+    }
+    if (opened == 2)
+    {
         for (int i = 0; i < currentConsumers.size(); ++i)
         {
             if (currentConsumers[i] < matrix.consumersAt(i))
             {
                 matrix.setCountAt(matrix.rows() - 1, i, matrix.consumersAt(i) - currentConsumers[i]);
-                currentSuppliers[matrix.rows()-1] += matrix.consumersAt(i) - currentConsumers[i];
+                currentSuppliers[matrix.rows() - 1] += matrix.consumersAt(i) - currentConsumers[i];
                 currentConsumers[i] = matrix.consumersAt(i);
                 countOfSelected++;
             }
