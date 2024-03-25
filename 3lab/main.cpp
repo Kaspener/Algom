@@ -150,8 +150,7 @@ std::vector<std::pair<int, int>> Matrix::getSortedCoords() const
     {
         for (int j = 0; j < m_columns; ++j)
         {
-            if (cost[i][j] != 0)
-                vec.push_back({cost[i][j], {i, j}});
+            vec.push_back({cost[i][j], {i, j}});
         }
     }
     std::sort(vec.begin(), vec.end());
@@ -197,10 +196,10 @@ public:
 void Solution::run()
 {
     matrix.print();
+    std::vector<std::pair<int, int>> coords = matrix.getSortedCoords();
     int opened = matrix.makeClose();
     std::vector<unsigned long long> currentSuppliers(matrix.rows(), 0);
     std::vector<unsigned long long> currentConsumers(matrix.columns(), 0);
-    std::vector<std::pair<int, int>> coords = matrix.getSortedCoords();
     int countOfSelected = 0;
     for (const auto &[row, column] : coords)
     {
