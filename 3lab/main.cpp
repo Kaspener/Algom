@@ -26,6 +26,7 @@ public:
     unsigned long long supplierAt(int index) const { return suppliers[index]; }
     unsigned long long consumersAt(int index) const { return consumers[index]; }
     void print() const;
+    void print(std::vector<unsigned long long>& currentSupplier, std::vector<unsigned long long>& currentConsumer) const;
     int makeClose();
     std::vector<std::pair<int, int>> getSortedCoords() const;
     void printDistribution() const;
@@ -106,6 +107,62 @@ void Matrix::print() const
     for (int i = 0; i < m_columns; ++i)
     {
         std::cout << "\033[33m" << std::setw(maxColumnWidth + spacing - 1) << std::right << consumers[i] << "\033[0m|";
+    }
+    std::cout << std::endl
+              << std::string(maxColumnWidth + spacing, ' ');
+    printBorder(m_columns - 2, maxColumnWidth, spacing);
+    std::cout << std::endl;
+}
+
+void Matrix::print(std::vector<unsigned long long>& currentSupplier, std::vector<unsigned long long>& currentConsumer) const
+{
+    int spacing = 9;
+
+    auto printBorder = [](int m_columns, int maxColumnWidth, int spacing) -> void
+    {
+        for (int i = 0; i <= m_columns + 1; ++i)
+        {
+            std::cout << "+" << std::string((maxColumnWidth + spacing - 1), '-');
+        }
+        std::cout << "+" << std::endl;
+    };
+    std::cout << std::string(maxColumnWidth + spacing, ' ');
+    printBorder(m_columns - 2, maxColumnWidth, spacing);
+    std::cout << std::string(maxColumnWidth + spacing, ' ');
+    std::cout << "|";
+    int half = (maxColumnWidth + spacing - 2) / 2;
+    for (int i = 0; i < m_columns; ++i)
+    {
+        std::cout << std::string(half, ' ') << "\033[33mB" << i + 1 << "\033[0m" << std::string(maxColumnWidth + spacing - 3 - half, ' ') << "|";
+    }
+    std::cout << std::endl;
+    printBorder(m_columns, maxColumnWidth, spacing);
+    for (int i = 0; i < m_rows; ++i)
+    {
+        std::cout << "|";
+        std::cout << std::string(half, ' ') << "\033[33mA" << i + 1 << "\033[0m" << std::string(maxColumnWidth + spacing - 3 - half, ' ') << "|";
+        for (int j = 0; j < m_columns; ++j)
+        {
+            std::cout << std::setw(maxColumnWidth + spacing - 1) << std::right << cost[i][j] << "|";
+        }
+        if (currentSupplier[i] != suppliers[i]) std::cout << "\033[32m" << std::setw(maxColumnWidth + spacing - 1) << std::right << suppliers[i] << "\033[0m|" << std::endl;
+        else std::cout << "\033[31m" << std::setw(maxColumnWidth + spacing - 1) << std::right << suppliers[i] << "\033[0m|" << std::endl;
+        std::cout << "|" << std::string(maxColumnWidth + spacing - 1, ' ') << "|";
+        for (int j = 0; j < m_columns; ++j)
+        {
+            if (count[i][j] != -1)
+                std::cout << "\033[32m" << std::setw(maxColumnWidth + spacing - 1) << std::right << count[i][j] << "\033[0m|";
+            else
+                std::cout << std::string(maxColumnWidth + spacing - 1, ' ') << "|";
+        }
+        std::cout << std::string(maxColumnWidth + spacing - 1, ' ') << "|" << std::endl;
+        printBorder(m_columns, maxColumnWidth, spacing);
+    }
+    std::cout << std::string(maxColumnWidth + spacing, ' ') << "|";
+    for (int i = 0; i < m_columns; ++i)
+    {
+        if (currentConsumer[i] != consumers[i]) std::cout << "\033[32m" << std::setw(maxColumnWidth + spacing - 1) << std::right << consumers[i] << "\033[0m|";
+        else std::cout << "\033[31m" << std::setw(maxColumnWidth + spacing - 1) << std::right << consumers[i] << "\033[0m|";
     }
     std::cout << std::endl
               << std::string(maxColumnWidth + spacing, ' ');
@@ -203,14 +260,44 @@ void Solution::run()
     int countOfSelected = 0;
     for (const auto &[row, column] : coords)
     {
-        if (currentSuppliers[row] < matrix.supplierAt(row) && currentConsumers[column] < matrix.consumersAt(column))
+        if (currentSuppliers[row] < matrix.supplierAt(row) && currentConsumers[column] < matrix.consumersAt(column) && countOfSelected < matrix.rows() + matrix.columns() - 1)
         {
             long long minimum = std::min(matrix.supplierAt(row) - currentSuppliers[row], matrix.consumersAt(column) - currentConsumers[column]);
             matrix.setCountAt(row, column, minimum);
             currentSuppliers[row] += minimum;
             currentConsumers[column] += minimum;
             countOfSelected++;
-            matrix.print();
+            matrix.print(currentSuppliers, currentConsumers);
+            if (currentSuppliers[row] == matrix.supplierAt(row) && currentConsumers[column] == matrix.consumersAt(column))
+            {
+                bool flag = false;
+                for (int i = 0; i < matrix.rows(); ++i)
+                {
+                    if (currentSuppliers[i] != matrix.supplierAt(i))
+                    {
+                        std::cout << "Both Consumer and Supplier are closing, position to 0 is: (A" << i+1 << "; B" << column+1 << ")" << std::endl;
+                        matrix.setCountAt(i, column, 0);
+                        flag = true;
+                        countOfSelected++;
+                        matrix.print(currentSuppliers, currentConsumers);
+                        break;
+                    }
+                }
+                if (!flag)
+                {
+                    for (int i = 0; i < matrix.columns(); ++i)
+                    {
+                        if (currentConsumers[i] != matrix.consumersAt(i))
+                        {
+                            matrix.setCountAt(row, i, 0);
+                            flag = true;
+                            countOfSelected++;
+                            matrix.print(currentSuppliers, currentConsumers);
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
     if (opened == 1)
@@ -225,6 +312,7 @@ void Solution::run()
                 countOfSelected++;
             }
         }
+        matrix.print(currentSuppliers, currentConsumers);
     }
     if (opened == 2)
     {
@@ -238,7 +326,7 @@ void Solution::run()
                 countOfSelected++;
             }
         }
-        matrix.print();
+        matrix.print(currentSuppliers, currentConsumers);
     }
     if (countOfSelected < matrix.rows() + matrix.columns() - 1)
     {
@@ -257,7 +345,7 @@ void Solution::run()
                 }
             }
         }
-        matrix.print();
+        matrix.print(currentSuppliers, currentConsumers);
     }
     matrix.printDistribution();
 }
