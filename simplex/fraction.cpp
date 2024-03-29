@@ -134,10 +134,10 @@ bool Fraction::operator>(const Fraction &other) const
 
 std::ostream &operator<<(std::ostream &os, const Fraction &dt)
 {
+    std::string number = std::to_string(dt.numerator);
     if (dt.denominator != 1)
-        os << dt.numerator << '/' << dt.denominator;
-    else
-        os << dt.numerator;
+        number += "/" + std::to_string(dt.denominator);
+    os << number;
     return os;
 }
 

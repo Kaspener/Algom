@@ -226,7 +226,12 @@ void Matrix::Basises()
             Fraction del = startVec[row][isUsed[row][0]];
             for (int i = 0; i < m; ++i)
             {
-                startVec[row][i] /= del;
+                if (del.numerator != 0)
+                    startVec[row][i] /= del;
+                else{
+                    flag = false;
+                    break;
+                }
             }
             for (int i = row + 1; i < matrix_size; ++i)
             {
@@ -254,6 +259,12 @@ void Matrix::Basises()
                 startVec[i][isUsed[row][0]].numerator = 0;
                 startVec[i][isUsed[row][0]].denominator = 1;
             }
+        }
+        if (!flag)
+        {
+            printOneBasis(basisItem);
+            std::cout << "NO BASIS" << std::endl;
+            continue;
         }
         std::vector<Fraction> res(m - 1, 0);
         for (auto &it : basisItem)
